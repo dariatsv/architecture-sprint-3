@@ -112,26 +112,28 @@ curl -v POST http://localhost:8081/api/devices \
 
 Пример ответа:
 
-```bash
-{"id":"79296af8-7908-471e-8b3c-663d8ab44497","name":"Thermostat Living Room","status":null,"type":"THERMOSTAT","metadata":{"location":"Living Room","model":"T1000"}}
+```text
+{"id":"12d48f01-f085-450c-a83f-ae60d2ef8666","name":"Thermostat Living Room","status":null,"type":"THERMOSTAT","metadata":{"location":"Living Room","model":"T1000"}}
 ```
 
+Необходимо взять id выше, полученного запроса и подставить в deviceId. В примере 12d48f01-f085-450c-a83f-ae60d2ef8666
 Изменение статуса, эмулируем сообщение от монолита:
 
 ```bash
- echo '{"deviceId":"79296af8-7908-471e-8b3c-663d8ab44497","command":"turn_on"}' | docker exec -i kafka kafka-console-producer.sh --bootstrap-server localhost:9092 --topic device_commands
+ echo '{"deviceId":"12d48f01-f085-450c-a83f-ae60d2ef8666","command":"turn_on"}' | docker exec -i kafka kafka-console-producer.sh --bootstrap-server localhost:9092 --topic device_commands
 ```
 
+Необходимо взять id выше, полученного запроса и подставить в deviceId. В примере 12d48f01-f085-450c-a83f-ae60d2ef8666
 Эмулируем публикацию телеметрии от монолита:
 
 ```bash
-echo '{"deviceId": "79296af8-7908-471e-8b3c-663d8ab44497", "temperature": 25.5}' | docker exec -i kafka kafka-console-producer.sh --bootstrap-server localhost:9092 --topic sensor_data
+echo '{"deviceId": "12d48f01-f085-450c-a83f-ae60d2ef8666", "temperature": 25.5}' | docker exec -i kafka kafka-console-producer.sh --bootstrap-server localhost:9092 --topic sensor_data
 ```
 
-сервис телеметрии считывает новые данные и сохраняет в базу:
+Сервис телеметрии считывает новые данные и сохраняет в базу:
 
 ```bash
-telemetry-service  | 2024-10-01T09:56:20.152Z  INFO 1 --- [telemetry-service] [ntainer#0-0-C-1] r.y.p.s.t.kafka.TelemetryDataListener    : Received telemetry data: TelemetryDataDTO(deviceId=79296af8-7908-471e-8b3c-663d8ab44497, temperature=25.5)
+telemetry-service          | 2024-10-22T18:32:15.749Z  INFO 1 --- [telemetry-service] [ntainer#0-0-C-1] r.y.p.s.t.kafka.TelemetryDataListener    : Received telemetry data: TelemetryDataDTO(deviceId=12d48f01-f085-450c-a83f-ae60d2ef8666, temperature=25.5)
 ```
 
 ### Выключение
