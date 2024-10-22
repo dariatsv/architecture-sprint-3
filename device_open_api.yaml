@@ -1,0 +1,313 @@
+openapi: 3.0.3
+info:
+  title: Device Management API
+  description: API для управления устройствами
+  version: 1.0.0
+tags:
+  - name: Devices
+    description: Операции по работе с устройствами
+paths:
+  /api/devices:
+    get:
+      tags:
+        - Devices
+      summary: Получить список устройств
+      operationId: getDevices
+      responses:
+        '200':
+          description: Список устройств
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DeviceDto'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      tags:
+        - Devices
+      summary: Создать устройство
+      operationId: createDevice
+      requestBody:
+        description: Устройство для создания
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeviceCreateRequest'
+      responses:
+        '201':
+          description: Устройство создано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceDto'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/devices/{deviceId}:
+    get:
+      tags:
+        - Devices
+      summary: Получить устройство по UUID
+      operationId: getDeviceById
+      parameters:
+        - name: deviceId
+          in: path
+          required: true
+          description: UUID устройства
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Устройство найдено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceDto'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    put:
+      tags:
+        - Devices
+      summary: Обновление устройства
+      operationId: updateDevice
+      parameters:
+        - name: deviceId
+          in: path
+          required: true
+          description: UUID устройства
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        description: Обновлённое устройство
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeviceUpdateRequest'
+      responses:
+        '200':
+          description: Устройство обновлено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceDto'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    delete:
+      tags:
+        - Devices
+      summary: Удаление устройства
+      operationId: deleteDevice
+      parameters:
+        - name: deviceId
+          in: path
+          required: true
+          description: UUID устройства
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Устройство удалено
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/devices/{deviceId}/commands:
+    post:
+      tags:
+        - Devices
+      summary: Отправить команду на устройство
+      operationId: sendCommandToDevice
+      parameters:
+        - name: deviceId
+          in: path
+          required: true
+          description: UUID устройства
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        description: Команда для отправки на устройства
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandRequest'
+      responses:
+        '202':
+          description: Команда принята для обработки
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommandResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    DeviceDto:
+      type: object
+      required:
+        - id
+        - name
+        - status
+        - type
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        name:
+          type: string
+          example: "Thermostat Living Room"
+        status:
+          type: string
+          enum:
+            - ONLINE
+            - OFFLINE
+            - UNKNOWN
+          example: "ONLINE"
+        type:
+          type: string
+          enum:
+            - THERMOSTAT
+            - SENSOR
+            - LIGHT
+            - OTHER
+          example: "THERMOSTAT"
+        metadata:
+          type: object
+          additionalProperties:
+            type: string
+          example:
+            location: "Living Room"
+            model: "T1000"
+    DeviceCreateRequest:
+      type: object
+      required:
+        - name
+        - type
+      properties:
+        name:
+          type: string
+          example: "Thermostat Bedroom"
+        type:
+          type: string
+          enum:
+            - THERMOSTAT
+            - SENSOR
+            - LIGHT
+            - OTHER
+          example: "THERMOSTAT"
+        metadata:
+          type: object
+          additionalProperties:
+            type: string
+          example:
+            location: "Bedroom"
+            model: "T2000"
+    DeviceUpdateRequest:
+      type: object
+      required:
+        - name
+        - type
+      properties:
+        name:
+          type: string
+          example: "Thermostat Bedroom Updated"
+        type:
+          type: string
+          enum:
+            - THERMOSTAT
+            - SENSOR
+            - LIGHT
+            - OTHER
+          example: "THERMOSTAT"
+        metadata:
+          type: object
+          additionalProperties:
+            type: string
+          example:
+            location: "Bedroom"
+            model: "T2000"
+    CommandRequest:
+      type: object
+      required:
+        - command
+      properties:
+        command:
+          type: string
+          example: "SET_TEMPERATURE"
+        parameters:
+          type: object
+          additionalProperties:
+            type: string
+          example:
+            value: "22"
+    CommandResponse:
+      type: object
+      required:
+        - message
+        - commandId
+      properties:
+        message:
+          type: string
+          example: "Команда получена для обработки."
+        commandId:
+          type: string
+          format: uuid
+          example: "423e4567-e89b-12d3-a456-426614174003"
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          example: "Не найдено"
+        message:
+          type: string
+          example: "Устройство не найдено"
+  responses:
+    NotFound:
+      description: Ресурс не обнаружен
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    BadRequest:
+      description: Некорректный запрос
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Unauthorized:
+      description: Неавторизованный запрос
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+security:
+  - bearerAuth: []

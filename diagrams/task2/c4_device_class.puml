@@ -1,0 +1,119 @@
+@startuml
+
+title Диаграмма классов для Сервиса управления устройствами
+
+package "Device Service" {
+    class DeviceController {
+            + getDevices(): ResponseEntity<List<DeviceDto>>
+            + getDeviceById(deviceId: UUID): ResponseEntity<DeviceDto>
+            + createDevice(deviceDto: DeviceDto): ResponseEntity<DeviceDto>
+            + updateDevice(deviceId: UUID, deviceDto: DeviceDto): ResponseEntity<DeviceDto>
+            + deleteDevice(deviceId: UUID): ResponseEntity<Void>
+            + sendCommand(deviceId: UUID, commandRequest: CommandRequest): ResponseEntity<MessageResponse>
+        }
+
+        class DeviceService {
+            + getAllDevices(): List<Device>
+            + getDeviceById(deviceId: UUID): Device
+            + createDevice(deviceDto: DeviceDto): Device
+            + updateDevice(deviceId: UUID, deviceDto: DeviceDto): Device
+            + deleteDevice(deviceId: UUID): void
+            + sendCommandToDevice(deviceId: UUID, commandRequest: CommandRequest): void
+            + processCommandConfirmation(confirmation: CommandConfirmation): void
+        }
+
+        interface DeviceRepository {
+            + findAll(): List<Device>
+            + findById(deviceId: UUID): Optional<Device>
+            + save(device: Device): Device
+            + deleteById(deviceId: UUID): void
+        }
+
+        class Device {
+            - id: UUID
+            - name: String
+            - status: DeviceStatus
+            - type: DeviceType
+            - metadata: Map<String, Object>
+            + getters and setters
+        }
+
+        enum DeviceStatus {
+            ONLINE
+            OFFLINE
+            UNKNOWN
+        }
+
+        enum DeviceType {
+            THERMOSTAT
+            SENSOR
+            LIGHT
+            OTHER
+        }
+
+        class CommandPublisher {
+            + publishCommand(commandMessage: CommandMessage): void
+        }
+
+        class CommandSubscriber {
+            + onCommandConfirmation(confirmation: CommandConfirmation): void
+        }
+
+        class EventPublisher {
+            + publishDeviceEvent(deviceEvent: DeviceEvent): void
+        }
+
+        class CommandMessage {
+            - deviceId: UUID
+            - command: String
+            - parameters: Map<String, Object>
+            - timestamp: LocalDateTime
+        }
+
+        class CommandConfirmation {
+            - deviceId: UUID
+            - commandId: UUID
+            - status: CommandStatus
+            - message: String
+            - timestamp: LocalDateTime
+        }
+
+        enum CommandStatus {
+            SUCCESS
+            FAILURE
+        }
+
+        class DeviceEvent {
+            - deviceId: UUID
+            - eventType: DeviceEventType
+            - payload: Map<String, Object>
+            - timestamp: LocalDateTime
+        }
+
+        enum DeviceEventType {
+            DEVICE_CREATED
+            DEVICE_UPDATED
+            DEVICE_DELETED
+            DEVICE_STATUS_CHANGED
+            COMMAND_SENT
+            COMMAND_CONFIRMED
+        }
+
+        ' Взаимосвязи
+        DeviceController --> DeviceService : использует
+        DeviceService --> DeviceRepository : использует
+        DeviceService --> CommandPublisher : использует
+        DeviceService --> EventPublisher : использует
+        DeviceService --> CommandSubscriber : получает подтверждения
+        CommandPublisher ..> MqttTemplate : использует
+        CommandSubscriber ..> MqttListener : слушает топик
+        EventPublisher ..> KafkaTemplate : использует
+        DeviceService ..> Device : меняет настройки
+        DeviceRepository ..|> JpaRepository
+
+        class MqttTemplate
+        class MqttListener
+        class KafkaTemplate
+}
+
+@enduml

@@ -1,0 +1,75 @@
+@startuml
+
+title Диаграмма классов для Сервиса уведомлений
+
+package "Notification service" {
+
+    class EventController {
+        + getNotificationSettings(userId: UUID): ResponseEntity<NotificationSettingsDto>
+        + updateNotificationSettings(userId: UUID, settingsDto: NotificationSettingsDto): ResponseEntity<NotificationSettingsDto>
+    }
+
+    class EventConsumer {
+        + onEventReceived(eventMessage: EventMessage): void
+    }
+
+    class NotificationProcessor {
+        + processEvent(eventMessage: EventMessage): void
+    }
+
+    class NotificationSender {
+        + sendNotification(notification: Notification): void
+    }
+
+    interface NotificationRepository {
+        + findByUserId(userId: UUID): Optional<NotificationSettings>
+        + save(settings: NotificationSettings): NotificationSettings
+    }
+
+    class NotificationSettings {
+        - id: UUID
+        - userId: UUID
+        - preferences: Map<NotificationType, Boolean>
+        + getters and setters
+    }
+
+    class Notification {
+        - userId: UUID
+        - type: NotificationType
+        - message: String
+        - timestamp: LocalDateTime
+        + getters and setters
+    }
+
+    class EventMessage {
+        - eventType: EventType
+        - payload: Map<String, Object>
+        - timestamp: LocalDateTime
+    }
+
+    enum NotificationType {
+        PUSH
+    }
+
+    enum EventType {
+        DEVICE_STATUS_CHANGED
+        HOUSE_EVENT
+        TELEMETRY_THRESHOLD_EXCEEDED
+    }
+
+    ' Взаимосвязи
+    EventController --> NotificationRepository : использует
+    EventConsumer ..> KafkaTemplate : использует
+    EventConsumer --> NotificationProcessor : передает события
+    NotificationProcessor --> NotificationSender : формирует уведомления
+    NotificationProcessor --> NotificationRepository : читает настройки
+    NotificationSender --> User : отправляет уведомления
+    NotificationRepository ..|> JpaRepository
+
+
+    class User
+    class KafkaTemplate
+
+}
+
+@enduml

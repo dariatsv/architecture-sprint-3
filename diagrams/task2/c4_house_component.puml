@@ -1,0 +1,24 @@
+@startuml
+!includeurl https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+title Диаграмма компонентов для Сервиса управления домами
+
+Container_Boundary(houseService, "Сервис управления домами") {
+    Component(houseController, "HouseController", "REST Controller", "Обрабатывает запросы управления домами")
+    Component(houseServiceComp, "HouseService", "Service", "Бизнес-логика домов и помещений")
+    Component(houseRepository, "HouseRepository", "Repository", "Доступ к базе данных домов")
+    Component(eventPublisher, "EventPublisher", "Kafka Producer", "Публикация событий в Kafka")
+}
+
+ContainerDb(houseDB, "БД домов", "PostgreSQL")
+System_Ext(kafka, "Kafka", "Kafka брокер")
+
+Rel(houseController, houseServiceComp, "Вызывает")
+Rel(houseServiceComp, houseRepository, "Читает и пишет данные")
+Rel(houseServiceComp, eventPublisher, "Публикует события")
+Rel(houseRepository, houseDB, "Читает и пишет")
+Rel(eventPublisher, kafka, "Публикует события")
+
+
+SHOW_LEGEND()
+@enduml
