@@ -1,0 +1,14 @@
+@startuml
+
+title ER-диаграмма для Сервиса телеметрии с использованием TimeSeries DB
+
+entity "TelemetryMeasurement" as TM {
+* time : Instant
+--
+device_id : UUID
+measurement_name : String
+value : Float
+tags : JSON
+}
+
+@enduml

@@ -1,0 +1,38 @@
+@startuml
+
+title ER-диаграмма для Сервиса управления устройствами
+
+entity "User" as U {
+  * id : UUID <<PK>>
+  --
+}
+
+entity "NotificationSettings" as NS {
+  * id : UUID <<PK>>
+  --
+  user_id : UUID <<FK>>
+}
+
+entity "NotificationPreference" as NP {
+  * id : UUID <<PK>>
+  --
+  notification_settings_id : UUID <<FK>>
+  notification_type : String
+  enabled : Boolean
+}
+
+entity "Notification" as N {
+  * id : UUID <<PK>>
+  --
+  user_id : UUID <<FK>>
+  type : String
+  message : String
+  timestamp : LocalDateTime
+}
+
+' Взаимосвязи
+U ||--|| NS : имеет
+NS ||--o{ NP :  имеет
+U ||--o{ N : получает
+
+@enduml

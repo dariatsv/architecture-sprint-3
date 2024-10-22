@@ -1,0 +1,30 @@
+@startuml
+!includeurl https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+title Диаграмма компонентов для Сервиса управления пользователями
+
+Container_Boundary(userService, "Сервис управления пользователями") {
+    Component(authController, "AuthController", "REST Controller", "Обрабатывает запросы аутентификации")
+    Component(userController, "UserController", "REST Controller", "Управление профилем пользователя")
+    Component(userServiceComp, "UserService", "Service", "Бизнес-логика пользователей")
+    Component(userRepository, "UserRepository", "Repository", "Доступ к базе данных пользователей")
+    Component(tokenProvider, "TokenProvider", "Security", "Генерация и валидация JWT токенов")
+    Component(eventPublisher, "EventPublisher", "Kafka Producer", "Публикация событий пользователей в Kafka")
+    Component(validation, "Validation", "Validator", "Валидация входящих данных")
+}
+
+ContainerDb(userDB, "БД пользователей", "PostgreSQL")
+System_Ext(kafka, "Kafka", "Kafka брокер")
+
+Rel(authController, userServiceComp, "Вызывает")
+Rel(userController, userServiceComp, "Вызывает")
+Rel(userServiceComp, userRepository, "Читает и пишет данные")
+Rel(userServiceComp, tokenProvider, "Генерирует токены")
+Rel(userServiceComp, eventPublisher, "Публикует события")
+Rel(userRepository, userDB, "Читает и пишет")
+Rel(authController, validation, "Валидация запросов")
+Rel(userController, validation, "Валидация запросов")
+Rel(eventPublisher, kafka, "Публикация событий")
+
+SHOW_LEGEND()
+@enduml

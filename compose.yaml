@@ -1,0 +1,106 @@
+name: monolith-with-device-management-and-telemetry-via-kafka
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: postgres
+    ports:
+      - '5432:5432'
+    networks:
+      app-network:
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U user" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  kafka:
+    image: bitnami/kafka:3
+    container_name: kafka
+    ports:
+      - '9092:9092'
+    networks:
+      app-network:
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+      ALLOW_PLAINTEXT_LISTENER: yes
+    depends_on:
+      - zookeeper
+
+  zookeeper:
+    image: bitnami/zookeeper:3
+    container_name: zookeeper
+    ports:
+      - '2181:2181'
+    networks:
+      app-network:
+    environment:
+      ALLOW_ANONYMOUS_LOGIN: yes
+
+  device-management-service:
+    container_name: device-management-service
+    build:
+      context: ./device-management
+    ports:
+      - '8081:8080'
+    networks:
+      app-network:
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/devices_db
+      SPRING_DATASOURCE_USERNAME: user
+      SPRING_DATASOURCE_PASSWORD: password
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    depends_on:
+      - postgres
+      - kafka
+
+  telemetry-service:
+    container_name: telemetry-service
+    build:
+      context: ./telemetry-service
+    ports:
+      - '8082:8080'
+    networks:
+      app-network:
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/telemetry_db
+      SPRING_DATASOURCE_USERNAME: user
+      SPRING_DATASOURCE_PASSWORD: password
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    depends_on:
+      - postgres
+      - kafka
+
+  monolith:
+    container_name: smart-home-monolith
+    build:
+      context: ./smart-home-monolith
+    ports:
+      - '8080:8080'
+    networks:
+      app-network:
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/smart_home
+      SPRING_DATASOURCE_USERNAME: user
+      SPRING_DATASOURCE_PASSWORD: password
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    depends_on:
+      - postgres
+      - kafka
+
+volumes:
+  postgres-data:
+  kafka-data:
+
+networks:
+  app-network:
+    name: smart-home-network
+    driver: bridge

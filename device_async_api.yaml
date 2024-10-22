@@ -1,0 +1,176 @@
+asyncapi: '2.6.0'
+info:
+  title: Device Management Async API
+  version: '1.0.0'
+  description: |
+    Асинхронный API для Сервиса управления устройствами. Используется для отправки команд устройствам и получения подтверждений от них.
+defaultContentType: application/json
+channels:
+  # Команды, отправляемые устройствам
+  devices/{deviceId}/commands:
+    parameters:
+      deviceId:
+        $ref: '#/components/parameters/deviceId'
+    publish:
+      summary: Отправка команды устройству
+      operationId: sendCommand
+      message:
+        $ref: '#/components/messages/CommandMessage'
+  # Подтверждения от устройств
+  devices/{deviceId}/commands/confirmations:
+    parameters:
+      deviceId:
+        $ref: '#/components/parameters/deviceId'
+    subscribe:
+      summary: Получение подтверждения от устройства
+      operationId: receiveCommandConfirmation
+      message:
+        $ref: '#/components/messages/CommandConfirmationMessage'
+  # События устройств в Kafka
+  device-events:
+    subscribe:
+      summary: Receive device events
+      operationId: receiveDeviceEvent
+      message:
+        $ref: '#/components/messages/DeviceEventMessage'
+components:
+  parameters:
+    deviceId:
+      description: UUID устройства
+      schema:
+        type: string
+        format: uuid
+  messages:
+    CommandMessage:
+      name: CommandMessage
+      title: Command Message
+      summary: Сообщение отправляемое устройству
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/CommandMessagePayload'
+    CommandConfirmationMessage:
+      name: CommandConfirmationMessage
+      title: Command Confirmation Message
+      summary: Сообщение с подтверждением от устройства
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/CommandConfirmationPayload'
+    DeviceEventMessage:
+      name: DeviceEventMessage
+      title: Device Event Message
+      summary: Сообщение события устройства в Kafka
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/DeviceEventPayload'
+  schemas:
+    CommandMessagePayload:
+      type: object
+      required:
+        - deviceId
+        - commandId
+        - command
+        - timestamp
+      properties:
+        deviceId:
+          type: string
+          format: uuid
+          description: The UUID of the device
+          example: '123e4567-e89b-12d3-a456-426614174000'
+        commandId:
+          type: string
+          format: uuid
+          description: Уникальный идентификатор команды
+          example: '423e4567-e89b-12d3-a456-426614174003'
+        command:
+          type: string
+          description: Команда для выполнения устройством
+          example: 'SET_TEMPERATURE'
+        parameters:
+          type: object
+          additionalProperties:
+            type: string
+          description: Параметры команды
+          example:
+            value: '22'
+        timestamp:
+          type: string
+          format: date-time
+          description: Время отправки команды
+          example: '2024-09-01T12:00:00Z'
+    CommandConfirmationPayload:
+      type: object
+      required:
+        - deviceId
+        - commandId
+        - status
+        - timestamp
+      properties:
+        deviceId:
+          type: string
+          format: uuid
+          description: UUID устройства
+          example: '123e4567-e89b-12d3-a456-426614174000'
+        commandId:
+          type: string
+          format: uuid
+          description: UUID команды, которая была выполнена
+          example: '423e4567-e89b-12d3-a456-426614174003'
+        status:
+          type: string
+          description: Статус выполнения команды
+          enum:
+            - SUCCESS
+            - FAILURE
+          example: 'SUCCESS'
+        message:
+          type: string
+          description: Дополнительная информация о событии
+          example: 'Команда была выполнена успешно.'
+        timestamp:
+          type: string
+          format: date-time
+          description: Время отправки подтверждения
+          example: '2024-09-01T12:00:05Z'
+    DeviceEventPayload:
+      type: object
+      required:
+        - deviceId
+        - eventType
+        - timestamp
+      properties:
+        deviceId:
+          type: string
+          format: uuid
+          description: UUID устройства
+          example: '123e4567-e89b-12d3-a456-426614174000'
+        eventType:
+          type: string
+          description: Тип события
+          enum:
+            - DEVICE_CREATED
+            - DEVICE_UPDATED
+            - DEVICE_DELETED
+            - DEVICE_STATUS_CHANGED
+            - COMMAND_SENT
+            - COMMAND_CONFIRMED
+          example: 'DEVICE_STATUS_CHANGED'
+        payload:
+          type: object
+          additionalProperties:
+            type: string
+          description: Дополнительная информация о событии
+          example:
+            previousStatus: 'OFFLINE'
+            newStatus: 'ONLINE'
+        timestamp:
+          type: string
+          format: date-time
+          description: Время, когда событие произошло
+          example: '2024-09-01T12:00:10Z'
+  securitySchemes:
+    mqttBasic:
+      type: userPassword
+      description: Базовая аутентификация для MQTT
+    kafkaAuth:
+      type: userPassword
+      description: Базовая аутентификация для Kafka

@@ -1,0 +1,88 @@
+
+@startuml
+
+title Диаграмма классов для Сервиса аналитики
+
+package "Analytics Service" {
+
+    class AnalyticsController {
+        + getReport(reportRequest: ReportRequest): ResponseEntity<ReportResponse>
+        + getAvailableReports(): ResponseEntity<List<ReportDefinitionDto>>
+    }
+
+    class AnalyticsProcessor {
+        + processReport(reportRequest: ReportRequest): ReportData
+    }
+
+    class ReportGenerator {
+        + generateReport(reportData: ReportData): ReportResponse
+    }
+
+    interface AnalyticsRepository {
+        + findReportDefinitionById(reportId: UUID): Optional<ReportDefinition>
+        + findAllReportDefinitions(): List<ReportDefinition>
+        + saveReportDefinition(reportDefinition: ReportDefinition): ReportDefinition
+    }
+
+    class ReportDefinition {
+        - id: UUID
+        - name: String
+        - description: String
+        - queryParameters: List<ReportParameter>
+        - queryTemplate: String
+        + getters and setters
+    }
+
+    class ReportParameter {
+        - name: String
+        - type: ParameterType
+        - required: Boolean
+        + getters and setters
+    }
+
+    enum ParameterType {
+        STRING
+        INTEGER
+        DATE
+        DATETIME
+        BOOLEAN
+    }
+
+    class ReportRequest {
+        - reportId: UUID
+        - parameters: Map<String, Object>
+        + getters and setters
+    }
+
+    class ReportResponse {
+        - reportId: UUID
+        - generatedAt: LocalDateTime
+        - data: List<Map<String, Object>>
+        + getters and setters
+    }
+
+    class ReportData {
+        - reportDefinition: ReportDefinition
+        - rawData: List<Map<String, Object>>
+        + getters and setters
+    }
+
+    class TelemetryServiceClient {
+        + fetchTelemetryData(query: String, params: Map<String, Object>): List<Map<String, Object>>
+    }
+
+    ' Взаимосвязи
+    AnalyticsController --> AnalyticsProcessor : использует
+    AnalyticsProcessor --> AnalyticsRepository : использует
+    AnalyticsProcessor --> TelemetryServiceClient : использует
+    AnalyticsProcessor --> ReportGenerator : использует
+    ReportGenerator --> AnalyticsController : возвращает
+    AnalyticsRepository ..|> JpaRepository
+    AnalyticsProcessor ..> ReportData : создаёт
+    AnalyticsController ..> ReportRequest : получает
+    AnalyticsController ..> ReportResponse : возвращает
+
+    class TelemetryServiceClient
+}
+
+@enduml

@@ -1,0 +1,34 @@
+@startuml
+
+title ER-диаграмма для Сервиса управления домами
+
+entity "House" as H {
+  * id : UUID
+  --
+  name : String
+  address : String
+  user_id : UUID
+}
+
+entity "Room" as R {
+  * id : UUID
+  --
+  house_id : UUID
+  name : String
+  type : RoomType
+}
+
+entity "HouseEvent" as HE {
+  * id : UUID
+  --
+  house_id : UUID
+  event_type : String
+  payload : JSON
+  timestamp : LocalDateTime
+}
+
+' Взаимосвязи между сущностями
+H ||--o{ R : содержит
+H ||--o{ HE : генерирует
+
+@enduml

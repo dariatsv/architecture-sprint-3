@@ -1,0 +1,122 @@
+asyncapi: '2.6.0'
+info:
+  title: Telemetry service AsyncAPI
+  version: '1.0.0'
+  description: Асинхронный API для получения и обработки данных телеметрии
+defaultContentType: application/json
+channels:
+  # Получение данных телеметрии от устройств
+  devices/{deviceId}/telemetry:
+    parameters:
+      deviceId:
+        $ref: '#/components/parameters/deviceId'
+    subscribe:
+      summary: Получение данных телеметрии от устройств
+      operationId: receiveTelemetryData
+      message:
+        $ref: '#/components/messages/TelemetryMessage'
+  # Публикация событий телеметрии в Kafka
+  telemetry-events:
+    publish:
+      summary: Публикация событий телеметрии
+      operationId: publishTelemetryEvent
+      message:
+        $ref: '#/components/messages/TelemetryEventMessage'
+components:
+  parameters:
+    deviceId:
+      description: UUID устройства
+      schema:
+        type: string
+        format: uuid
+  messages:
+    TelemetryMessage:
+      name: TelemetryMessage
+      title: Сообщение телеметрии
+      summary: Данные телеметрии, отправляемые устройствами
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/TelemetryMessagePayload'
+    TelemetryEventMessage:
+      name: TelemetryEventMessage
+      title: Сообщение события телеметрии
+      summary: События телеметрии, публикуемые в Kafka
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/TelemetryEventPayload'
+  schemas:
+    TelemetryMessagePayload:
+      type: object
+      required:
+        - deviceId
+        - timestamp
+        - measurements
+      properties:
+        deviceId:
+          type: string
+          format: uuid
+          description: UUID устройства
+          example: '123e4567-e89b-12d3-a456-426614174000'
+        timestamp:
+          type: string
+          format: date-time
+          description: Время измерения
+          example: '2024-09-01T12:00:00Z'
+        measurements:
+          type: object
+          additionalProperties:
+            type: number
+            format: float
+          description: Измерения в формате имя_измерения ":" значение
+          example:
+            temperature: 22.5
+            humidity: 45.0
+        tags:
+          type: object
+          additionalProperties:
+            type: string
+          description: Дополнительные метаданные
+          example:
+            location: 'Living Room'
+            unit: 'Celsius'
+    TelemetryEventPayload:
+      type: object
+      required:
+        - deviceId
+        - eventType
+        - timestamp
+      properties:
+        deviceId:
+          type: string
+          format: uuid
+          description: UUID устройства
+          example: '123e4567-e89b-12d3-a456-426614174000'
+        eventType:
+          type: string
+          description: Тип события телеметрии
+          enum:
+            - TELEMETRY_RECEIVED
+          example: 'TELEMETRY_RECEIVED'
+        data:
+          type: object
+          additionalProperties:
+            type: object
+          description: Дополнительные данные события
+          example:
+            measurements:
+              temperature: 22.5
+              humidity: 45.0
+            tags:
+              location: 'Living Room'
+        timestamp:
+          type: string
+          format: date-time
+          description: Время события
+          example: '2024-09-01T12:00:00Z'
+  securitySchemes:
+    mqttBasic:
+      type: userPassword
+      description: Базовая аутентификация для MQTT
+    kafkaAuth:
+      type: userPassword
+      description: Базовая аутентификация для Kafka

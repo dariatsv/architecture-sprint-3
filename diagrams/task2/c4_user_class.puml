@@ -1,0 +1,96 @@
+@startuml
+
+title Диаграмма классов для Сервиса управления пользователями
+
+package "User Service" {
+
+    class AuthController {
+        + authenticate(loginRequest: LoginRequest): ResponseEntity<JwtResponse>
+        + register(signUpRequest: SignUpRequest): ResponseEntity<MessageResponse>
+    }
+
+    class UserController {
+        + getUserProfile(): ResponseEntity<UserProfile>
+        + updateUserProfile(userProfile: UserProfile): ResponseEntity<UserProfile>
+    }
+
+    class UserService {
+        + loadUserByUsername(username: String): UserDetails
+        + createUser(userDto: UserDto): User
+        + updateUser(userDto: UserDto): User
+        + getUserById(id: UUID): User
+    }
+
+    interface UserRepository {
+        + findByUsername(username: String): Optional<User>
+        + existsByUsername(username: String): Boolean
+        + save(user: User): User
+    }
+
+    class User {
+        - id: UUID
+        - username: String
+        - password: String
+        - email: String
+        - roles: Set<Role>
+        + getters and setters
+    }
+
+    class Role {
+        - id: UUID
+        - name: RoleName
+        + getters and setters
+    }
+
+    enum RoleName {
+        USER
+        ADMIN
+    }
+
+    class TokenProvider {
+        + generateToken(authentication: Authentication): String
+        + validateToken(token: String): Boolean
+        + getUserIdFromToken(token: String): UUID
+    }
+
+    class EventPublisher {
+        + publishUserEvent(userEvent: UserEvent): void
+    }
+
+    class ValidationUtil {
+        + validateSignUpRequest(signUpRequest: SignUpRequest): void
+        + validateLoginRequest(loginRequest: LoginRequest): void
+    }
+
+    class UserEvent {
+        - userId: UUID
+        - eventType: UserEventType
+        - timestamp: LocalDateTime
+    }
+
+    enum UserEventType {
+        USER_CREATED
+        USER_UPDATED
+        USER_DELETED
+    }
+
+    ' Взаимосвязи между объектами
+    AuthController --> UserService : использует
+    UserController --> UserService : использует
+    UserService --> UserRepository : использует
+    UserService --> TokenProvider : использует
+    UserService --> EventPublisher : использует
+    AuthController ..> ValidationUtil : использует
+    UserController ..> ValidationUtil : использует
+    UserRepository ..|> JpaRepository
+    UserService ..> User : меняет
+    UserService ..> Role : меняет
+    EventPublisher ..> KafkaTemplate : использует
+    TokenProvider ..> JwtUtils : использует
+
+    class KafkaTemplate
+    class JwtUtils
+
+}
+
+@enduml

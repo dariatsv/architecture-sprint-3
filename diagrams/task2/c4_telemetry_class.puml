@@ -1,0 +1,70 @@
+@startuml
+
+title Диаграмма классов для Сервиса телеметрии
+
+package "Telemetry Service" {
+
+    class TelemetryConsumer {
+        + onTelemetryReceived(telemetryMessage: TelemetryMessage): void
+    }
+
+    class EventPublisher {
+            + publishTelemetryEvent(telemetryEvent: TelemetryEvent): void
+    }
+
+    class TelemetryProcessor {
+        + processTelemetry(telemetryMessage: TelemetryMessage): void
+    }
+
+    interface TelemetryRepository {
+        + saveMeasurement(telemetryData: TelemetryData): void
+        + findMeasurements(deviceId: UUID, measurementName: String, start: Instant, end: Instant): List<TelemetryData>
+    }
+
+    class TelemetryController {
+        + getLatestMeasurement(deviceId: UUID, measurementName: String): ResponseEntity<TelemetryDataDto>
+        + getMeasurementHistory(deviceId: UUID, measurementName: String, start: Instant, end: Instant): ResponseEntity<List<TelemetryDataDto>>
+    }
+
+    class TelemetryMessage {
+        - deviceId: UUID
+        - timestamp: Instant
+        - measurements: Map<String, Float>
+        - tags: Map<String, String>
+    }
+
+    class TelemetryData {
+        - timestamp: Instant
+        - deviceId: UUID
+        - measurementName: String
+        - value: Float
+        - tags: Map<String, String>
+    }
+
+     class TelemetryEvent {
+            - deviceId: UUID
+            - eventType: TelemetryEventType
+            - data: Map<String, Object>
+            - timestamp: Instant
+        }
+
+     enum TelemetryEventType {
+        TELEMETRY_RECEIVED
+     }
+
+    ' Взаимосвязи
+    TelemetryConsumer --> TelemetryProcessor : использует
+    TelemetryProcessor --> TelemetryRepository : использует
+    TelemetryController --> TelemetryRepository : использует
+    TelemetryProcessor ..> TelemetryData : создаёт
+    TelemetryController ..> TelemetryDataDto : возвращает
+    TelemetryProcessor --> EventPublisher : использует
+    EventPublisher ..> KafkaTemplate : использует
+    TelemetryConsumer ..> MqttListener : слушает топик
+
+    class KafkaTemplate
+    class MqttListener
+
+}
+
+@enduml
