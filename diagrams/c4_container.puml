@@ -1,0 +1,66 @@
+@startuml
+!includeurl https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+SHOW_PERSON_OUTLINE()
+
+AddElementTag("microService", $shape=EightSidedShape(), $bgColor="CornflowerBlue", $fontColor="white", $legendText="micro service\neight sided")
+
+
+Boundary(home, "Дом пользователя", "удалённый объект") {
+    Person(user, "Пользователь", "Веб или мобильное приложение")
+    System_Ext(device, "Устройства и датчики", "Устройства в домах пользователей")
+}
+
+Enterprise_Boundary(company, "Smart Home Company") {
+    Person(admin, "Администратор", "Управляет системой")
+    System(system, "Smart Home System", "Система управления умными домами")
+
+    Container_Boundary(system, "Smart Home System") {
+        Container(apiGateway, "API Gateway", "Kusk/Kong", "Маршрутизация, балансировка, аутентификация и авторизация")
+        Container(deviceService, "Сервис управления устройствами", "Java Spring Boot", "Управление устройствами", $tags="microService")
+        Container(telemetryService, "Сервис телеметрии", "Java Spring Boot", "Сбор и обработка телеметрии", $tags="microService")
+        Container(userService, "Сервис управления пользователями", "Java Spring Boot", "Аутентификация и авторизация", $tags="microService")
+        Container(houseService, "Сервис управления домами", "Java Spring Boot", "Управление домами и помещениями", $tags="microService")
+        Container(notificationService, "Сервис уведомлений", "Java Spring Boot", "Отправка уведомлений пользователям", $tags="microService")
+        Container(analyticsService, "Сервис аналитики", "Java Spring Boot", "Аналитический сервис", $tags="microService")
+        ContainerQueue(kafka, "Kafka", "Шина данных", "Асинхронное взаимодействие")
+        ContainerQueue(mosquitto, "Mosquitto", "MQTT брокер", "Обработка телеметрии и отправка команд")
+        ContainerDb(deviceDB, "БД устройств", "PostgreSQL", "Хранение данных устройств")
+        ContainerDb(telemetryDB, "БД телеметрии", "TimeSeries DB", "Хранение данных телеметрии")
+        ContainerDb(userDB, "БД пользователей", "PostgreSQL", "Хранение данных пользователей")
+        ContainerDb(houseDB, "БД домов", "PostgreSQL", "Хранение данных домов и помещений")
+        ContainerDb(notificationDB, "БД уведомлений", "PostgreSQL", "Хранение настроек для уведомлений")
+        ContainerDb(analyticDB, "БД аналитики", "PostgreSQL", "Хранение настроек и шаблонов отчётов")
+    }
+}
+
+Rel(user, apiGateway, "Запросы управления и получения данных", "HTTPS/REST")
+Rel(admin, apiGateway, "Запросы управления и получения данных", "HTTPS/REST")
+Rel(apiGateway, userService, "Проверка аутентификации", "HTTPS/REST")
+Rel(apiGateway, deviceService, "Управление устройствами", "HTTPS/REST")
+Rel(apiGateway, telemetryService, "Получение телеметрии", "HTTPS/REST")
+Rel(apiGateway, houseService, "Управление домами", "HTTPS/REST")
+Rel(apiGateway, analyticsService, "Аналитические запросы", "HTTPS/REST")
+
+Rel(userService, kafka, "Публикация пользовательских событий", "Kafka Topic")
+Rel(deviceService, kafka, "Публикация событий устройств", "Kafka Topic")
+Rel(deviceService, mosquitto, "Публикация команд и считывание статуса", "TLS/MQTT")
+Rel(telemetryService, kafka, "Публикация данных телеметрии", "Kafka Topic")
+Rel(houseService, kafka, "Публикация событий домов и помещений", "Kafka Topic")
+Rel(notificationService, kafka, "Вычитывание событий для уведомлений", "Kafka Topic")
+Rel(notificationService, user, "Отправка уведомлений", "Push")
+Rel(analyticsService, telemetryService, "Получение истории телеметрии по запросу", "HTTPS/REST")
+
+Rel(deviceService, deviceDB, "Чтение и запись данных")
+Rel(telemetryService, telemetryDB, "Хранение телеметрии")
+Rel(userService, userDB, "Чтение и запись данных")
+Rel(houseService, houseDB, "Чтение и запись данных")
+Rel(notificationService, notificationDB, "Чтение и запись данных")
+Rel(analyticsService, analyticDB, "Чтение и запись данных")
+
+Rel(device, mosquitto, "Передача телеметрии и получение команд", "TLS/MQTT")
+Rel(telemetryService, mosquitto, "Вычитывание телеметрии", "TLS/MQTT")
+
+SHOW_LEGEND()
+
+@enduml
