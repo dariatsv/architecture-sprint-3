@@ -1,0 +1,31 @@
+@startuml
+!includeurl https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+title Диаграмма компонентов для Сервиса управления устройствами
+
+Container_Boundary(deviceService, "Сервис управления устройствами") {
+    Component(deviceController, "DeviceController", "REST Controller", "Обрабатывает запросы управления устройствами")
+    Component(deviceServiceComp, "DeviceService", "Service", "Бизнес-логика управления устройствами")
+    Component(deviceRepository, "DeviceRepository", "Repository", "Доступ к базе данных устройств")
+    Component(commandPublisher, "CommandPublisher", "MQTT Publisher", "Отправка команд устройствам через MQTT брокер")
+    Component(commandSubscriber, "CommandSubscriber", "MQTT Subscriber", "Получение подтверждений от устройств через MQTT брокер")
+    Component(eventPublisher, "EventPublisher", "Kafka Producer", "Публикация событий устройств в Kafka")
+}
+
+System_Ext(mosquitto, "Mosquitto", "MQTT брокер")
+System_Ext(kafka, "Kafka", "Kafka брокер")
+ContainerDb(deviceDB, "БД устройств", "PostgreSQL")
+
+Rel(deviceController, deviceServiceComp, "Вызывает")
+Rel(deviceServiceComp, deviceRepository, "Читает и пишет данные")
+Rel(deviceServiceComp, commandPublisher, "Отправляет команды")
+Rel(deviceServiceComp, eventPublisher, "Публикует события")
+Rel(deviceRepository, deviceDB, "Читает и пишет")
+Rel(commandPublisher, mosquitto, "Публикует команды", "MQTT")
+Rel(commandSubscriber, mosquitto, "Считывает результат выполнения команд", "MQTT")
+Rel(commandSubscriber, mosquitto, "Подписывается на подтверждения", "MQTT")
+Rel(commandSubscriber, deviceServiceComp, "Передает подтверждения")
+Rel(eventPublisher, kafka, "Публикует события", "Kafka Topic")
+
+SHOW_LEGEND()
+@enduml

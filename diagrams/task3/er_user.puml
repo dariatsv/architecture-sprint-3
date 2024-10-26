@@ -1,0 +1,38 @@
+@startuml
+
+title ER-диаграмма для Сервиса управления пользователями
+
+entity "User" as U {
+  * id : UUID <<PK>>
+  --
+  * username : String
+  * password : String
+  email : String
+}
+
+entity "Role" as R {
+  * id : UUID <<PK>>
+  --
+  * name : String
+}
+
+entity "User_Role" as UR {
+  * user_id : UUID <<FK>>
+  * role_id : UUID <<FK>>
+  --
+}
+
+entity "UserEvent" as UE {
+  * id : UUID <<PK>>
+  --
+  * user_id : UUID <<FK>>
+  * event_type : String
+  timestamp : LocalDateTime
+}
+
+' Определение связей
+U ||--o{ UR : имеет
+R ||--o{ UR : принадлежит
+U ||--o{ UE : генерирует
+
+@enduml

@@ -1,0 +1,30 @@
+###
+GET http://localhost:8081/api/devices
+
+###
+POST http://localhost:8081/api/devices
+Host: localhost:8081
+Content-Type: application/json
+
+{
+  "name": "Thermostat Living Room",
+  "type": "THERMOSTAT",
+  "metadata": {
+    "location": "Living Room",
+    "model": "T1000"
+  }
+}
+
+###
+GET http://localhost:8080/api/devices/718b46bf-8c18-485c-bb60-66a0f0addd72
+
+###
+PUT http://localhost:8080/api/devices/1cfadecc-0108-4841-b578-eac17af913ac/status
+Content-Type: application/json
+
+{
+  "status": "ONLINE"
+}
+
+###
+GET http://localhost:8080/api/devices

@@ -1,0 +1,25 @@
+@startuml
+
+title ER-диаграмма для Сервиса аналитики
+
+entity "ReportDefinition" as RD {
+  * id : UUID <<PK>>
+  --
+  name : String
+  description : String
+  query_template : Text
+}
+
+entity "ReportParameter" as RP {
+  * id : UUID <<PK>>
+  --
+  report_definition_id : UUID <<FK>>
+  name : String
+  type : String
+  required : Boolean
+}
+
+' Взаимосвязи
+RD ||--o{ RP : имеет
+
+@enduml

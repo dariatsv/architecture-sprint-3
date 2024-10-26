@@ -1,0 +1,144 @@
+openapi: 3.0.3
+info:
+  title: Telemetry Service API
+  version: 1.0.0
+  description: API для получения данных телеметрии устройств
+tags:
+  - name: Telemetry
+    description: Операции с телеметрией
+paths:
+  /api/telemetry/devices/{deviceId}/latest:
+    get:
+      tags:
+        - Telemetry
+      summary: Получить последние данные телеметрии
+      operationId: getLatestMeasurement
+      parameters:
+        - name: deviceId
+          in: path
+          required: true
+          description: UUID устройства
+          schema:
+            type: string
+            format: uuid
+        - name: measurementName
+          in: query
+          required: true
+          description: Название измерения
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Успешный ответ с последним измерением
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TelemetryDataDto'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/telemetry/devices/{deviceId}/history:
+    get:
+      tags:
+        - Telemetry
+      summary: Получить исторические данные телеметрии
+      operationId: getMeasurementHistory
+      parameters:
+        - name: deviceId
+          in: path
+          required: true
+          description: UUID устройства
+          schema:
+            type: string
+            format: uuid
+        - name: measurementName
+          in: query
+          required: true
+          description: Название измерения
+          schema:
+            type: string
+        - name: start
+          in: query
+          required: true
+          description: Начало периода
+          schema:
+            type: string
+            format: date-time
+        - name: end
+          in: query
+          required: true
+          description: Конец периода
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Успешный ответ с историческими данными
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TelemetryDataDto'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+components:
+  schemas:
+    TelemetryDataDto:
+      type: object
+      required:
+        - deviceId
+        - timestamp
+        - measurementName
+        - value
+      properties:
+        deviceId:
+          type: string
+          format: uuid
+          example: '123e4567-e89b-12d3-a456-426614174000'
+        timestamp:
+          type: string
+          format: date-time
+          example: '2024-09-01T12:00:00Z'
+        measurementName:
+          type: string
+          example: 'temperature'
+        value:
+          type: number
+          format: float
+          example: 22.5
+        tags:
+          type: object
+          additionalProperties:
+            type: string
+          example:
+            location: 'Living Room'
+            unit: 'Celsius'
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          example: 'Не найдено'
+        message:
+          type: string
+          example: 'Устройство не существует'
+  responses:
+    BadRequest:
+      description: Неверный запрос
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    NotFound:
+      description: Ресурс не найден
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'

@@ -1,0 +1,25 @@
+@startuml
+!includeurl https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+title Диаграмма компонентов для Сервиса уведомлений
+
+Container_Boundary(notificationService, "Сервис уведомлений") {
+    Component(eventController, "Event Controller", "REST Controller", "API для сохранения настроек уведомлений")
+    Component(eventConsumer, "EventConsumer", "Kafka Consumer", "Получает события из Kafka")
+    Component(notificationProcessor, "NotificationProcessor", "Processor", "Обрабатывает события и формирует уведомления")
+    Component(notificationSender, "NotificationSender", "Sender", "Отправляет уведомления пользователям")
+    Component(notificationRepository, "NotificationRepository", "Repository", "Хранение настроек уведомлений")
+}
+
+ContainerDb(notificationDB, "БД уведомлений", "PostgreSQL")
+Person_Ext(user, "Пользователь")
+
+Rel(eventConsumer, notificationProcessor, "Передает события")
+Rel(notificationProcessor, notificationSender, "Формирует уведомления")
+Rel(notificationProcessor, notificationRepository, "Читает настройки")
+Rel(notificationRepository, notificationDB, "Читает и пишет")
+Rel(eventController, notificationDB, "Читает и пишет")
+Rel(notificationSender, user, "Отправляет уведомления", "Push")
+
+SHOW_LEGEND()
+@enduml

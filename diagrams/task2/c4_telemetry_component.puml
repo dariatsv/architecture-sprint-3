@@ -1,0 +1,27 @@
+@startuml
+!includeurl https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+title Диаграмма компонентов для Сервиса телеметрии
+
+Container_Boundary(telemetryService, "Сервис телеметрии") {
+    Component(telemetryConsumer, "TelemetryConsumer", "MQTT Subscriber", "Получает данные телеметрии от устройств через MQTT")
+    Component(telemetryProcessor, "TelemetryProcessor", "Processor", "Обрабатывает и валидирует данные телеметрии")
+    Component(telemetryRepository, "TelemetryRepository", "Repository", "Сохраняет данные телеметрии в базу данных")
+    Component(telemetryController, "TelemetryController", "REST Controller", "Предоставляет API для получения телеметрии")
+    Component(eventPublisher, "EventPublisher", "Kafka Producer", "Публикует события телеметрии в Kafka")
+}
+
+System_Ext(mosquitto, "Mosquitto", "MQTT брокер")
+System_Ext(kafka, "Kafka", "Kafka брокер")
+ContainerDb(telemetryDB, "БД телеметрии", "TimeSeries DB")
+
+Rel(telemetryConsumer, mosquitto, "Подписывается на телеметрию", "MQTT")
+Rel(telemetryConsumer, telemetryProcessor, "Передает данные")
+Rel(telemetryProcessor, telemetryRepository, "Сохраняет данные")
+Rel(telemetryProcessor, eventPublisher, "Публикует телеметрию")
+Rel(eventPublisher, kafka, "Публикует телеметрию")
+Rel(telemetryController, telemetryRepository, "Запрашивает данные телеметрии")
+Rel(telemetryRepository, telemetryDB, "Читает и пишет")
+
+SHOW_LEGEND()
+@enduml

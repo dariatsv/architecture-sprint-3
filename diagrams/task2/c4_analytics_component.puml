@@ -1,0 +1,24 @@
+@startuml
+!includeurl https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+title Диаграмма компонентов для Сервиса аналитики
+
+Container_Boundary(analyticsService, "Сервис аналитики") {
+    Component(analyticsController, "AnalyticsController", "REST Controller", "Обрабатывает аналитические запросы")
+    Component(analyticsProcessor, "AnalyticsProcessor", "Processor", "Выполняет анализ данных")
+    Component(reportGenerator, "ReportGenerator", "Generator", "Генерирует отчеты")
+    Component(analyticsRepository, "AnalyticsRepository", "Repository", "Хранит настройки и шаблоны отчетов")
+}
+
+ContainerDb(analyticDB, "БД аналитики", "PostgreSQL")
+Container(telemetryService, "Сервис телеметрии", "Java Spring Boot")
+
+Rel(analyticsController, analyticsProcessor, "Вызывает")
+Rel(analyticsProcessor, telemetryService, "Запрашивает данные телеметрии", "HTTPS/REST")
+Rel(analyticsProcessor, reportGenerator, "Передает данные")
+Rel(reportGenerator, analyticsController, "Возвращает отчеты")
+Rel(analyticsProcessor, analyticsRepository, "Читает настройки")
+Rel(analyticsRepository, analyticDB, "Читает и пишет")
+
+SHOW_LEGEND()
+@enduml

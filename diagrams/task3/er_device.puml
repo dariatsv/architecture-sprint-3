@@ -1,0 +1,71 @@
+@startuml
+
+title ER-диаграмма для Сервиса управления устройствами
+
+entity "User" as U {
+  * id : UUID <<PK>>
+  --
+  * username : String
+  * password : String
+  email : String
+}
+
+entity "House" as H {
+  * id : UUID <<PK>>
+  --
+  name : String
+  address : String
+  user_id : UUID <<FK>>
+}
+
+
+entity "Device" as D {
+  * id : UUID <<PK>>
+  --
+  name : String
+  status : String
+  type : String
+  metadata : JSON
+  house_id : UUID <<FK>>
+}
+
+entity "CommandMessage" as CM {
+  * id : UUID <<PK>>
+  --
+  device_id : UUID <<FK>>
+  command : String
+  parameters : JSON
+  timestamp : LocalDateTime
+}
+
+entity "CommandConfirmation" as CC {
+  * id : UUID <<PK>>
+  --
+  device_id : UUID <<FK>>
+  command_id : UUID <<FK>>
+  status : String
+  message : String
+  timestamp : LocalDateTime
+}
+
+entity "DeviceEvent" as DE {
+  * id : UUID <<PK>>
+  --
+  device_id : UUID <<FK>>
+  event_type : String
+  payload : JSON
+  timestamp : LocalDateTime
+}
+
+' Взаимосвязи между сущностями
+U ||--o{ H :  содержит
+H ||--o{ D : содержит
+D ||--o{ CM : отправляет \nкоманды
+D ||--o{ CC : получает \nподтверждения
+D ||--o{ DE : генерирует \nсобытия
+CM ||--o{ CC : подтверждается
+CM }|--|| D : относится к
+CC }|--|| CM : подтверждает
+DE }|--|| D : связано с
+
+@enduml

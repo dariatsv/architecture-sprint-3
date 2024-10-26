@@ -1,0 +1,104 @@
+@startuml
+
+title Класс-диаграмма для Сервиса управления домами
+
+package "Сервис управления домами" {
+
+    class HouseController {
+        + getAllHouses(): ResponseEntity<List<HouseDto>>
+        + getHouseById(houseId: UUID): ResponseEntity<HouseDto>
+        + createHouse(houseDto: HouseDto): ResponseEntity<HouseDto>
+        + updateHouse(houseId: UUID, houseDto: HouseDto): ResponseEntity<HouseDto>
+        + deleteHouse(houseId: UUID): ResponseEntity<Void>
+        + getRooms(houseId: UUID): ResponseEntity<List<RoomDto>>
+        + addRoom(houseId: UUID, roomDto: RoomDto): ResponseEntity<RoomDto>
+        + updateRoom(houseId: UUID, roomId: UUID, roomDto: RoomDto): ResponseEntity<RoomDto>
+        + deleteRoom(houseId: UUID, roomId: UUID): ResponseEntity<Void>
+    }
+
+    class HouseService {
+        + getAllHouses(): List<House>
+        + getHouseById(houseId: UUID): House
+        + createHouse(houseDto: HouseDto): House
+        + updateHouse(houseId: UUID, houseDto: HouseDto): House
+        + deleteHouse(houseId: UUID): void
+        + getRooms(houseId: UUID): List<Room>
+        + addRoom(houseId: UUID, roomDto: RoomDto): Room
+        + updateRoom(houseId: UUID, roomId: UUID, roomDto: RoomDto): Room
+        + deleteRoom(houseId: UUID, roomId: UUID): void
+    }
+
+    interface HouseRepository {
+        + findAll(): List<House>
+        + findById(houseId: UUID): Optional<House>
+        + save(house: House): House
+        + deleteById(houseId: UUID): void
+    }
+
+    interface RoomRepository {
+        + findByHouseId(houseId: UUID): List<Room>
+        + findByIdAndHouseId(roomId: UUID, houseId: UUID): Optional<Room>
+        + save(room: Room): Room
+        + deleteById(roomId: UUID): void
+    }
+
+    class House {
+        - id: UUID
+        - name: String
+        - address: String
+        - userId: UUID
+        - rooms: List<Room>
+        + getters and setters
+    }
+
+    class Room {
+        - id: UUID
+        - house: House
+        - name: String
+        - type: RoomType
+        + getters and setters
+    }
+
+    enum RoomType {
+        KITCHEN
+        BEDROOM
+        LIVING_ROOM
+        BATHROOM
+        OTHER
+    }
+
+    class EventPublisher {
+        + publishHouseEvent(houseEvent: HouseEvent): void
+    }
+
+    class HouseEvent {
+        - houseId: UUID
+        - eventType: HouseEventType
+        - payload: Map<String, Object>
+        - timestamp: LocalDateTime
+    }
+
+    enum HouseEventType {
+        HOUSE_CREATED
+        HOUSE_UPDATED
+        HOUSE_DELETED
+        ROOM_ADDED
+        ROOM_UPDATED
+        ROOM_DELETED
+    }
+
+    ' Взаимосвязи
+    HouseController --> HouseService : использует
+    HouseService --> HouseRepository : использует
+    HouseService --> RoomRepository : использует
+    HouseService --> EventPublisher : использует
+    HouseService ..> House : управляет
+    HouseService ..> Room : управляет
+    HouseRepository ..|> JpaRepository
+    RoomRepository ..|> JpaRepository
+    EventPublisher ..> KafkaTemplate : использует
+
+    class KafkaTemplate
+}
+
+@enduml
