@@ -2,12 +2,20 @@
 
 title ER-диаграмма для Сервиса управления домами
 
+entity "User" as U {
+  * id : UUID <<PK>>
+  --
+  * username : String
+  * password : String
+  email : String
+}
+
 entity "House" as H {
   * id : UUID
   --
   name : String
   address : String
-  user_id : UUID
+  user_id : UUID <<FK>>
 }
 
 entity "Room" as R {
@@ -30,5 +38,6 @@ entity "HouseEvent" as HE {
 ' Взаимосвязи между сущностями
 H ||--o{ R : содержит
 H ||--o{ HE : генерирует
+U ||--o{ H : содержит
 
 @enduml

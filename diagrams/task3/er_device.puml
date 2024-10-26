@@ -2,6 +2,23 @@
 
 title ER-диаграмма для Сервиса управления устройствами
 
+entity "User" as U {
+  * id : UUID <<PK>>
+  --
+  * username : String
+  * password : String
+  email : String
+}
+
+entity "House" as H {
+  * id : UUID <<PK>>
+  --
+  name : String
+  address : String
+  user_id : UUID <<FK>>
+}
+
+
 entity "Device" as D {
   * id : UUID <<PK>>
   --
@@ -9,6 +26,7 @@ entity "Device" as D {
   status : String
   type : String
   metadata : JSON
+  house_id : UUID <<FK>>
 }
 
 entity "CommandMessage" as CM {
@@ -40,6 +58,8 @@ entity "DeviceEvent" as DE {
 }
 
 ' Взаимосвязи между сущностями
+U ||--o{ H :  содержит
+H ||--o{ D : содержит
 D ||--o{ CM : отправляет \nкоманды
 D ||--o{ CC : получает \nподтверждения
 D ||--o{ DE : генерирует \nсобытия
